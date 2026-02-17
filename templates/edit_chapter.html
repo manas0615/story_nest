@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Chapter - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <h2>Edit Chapter {{ chapter.chapter_number }}</h2>
+        <p class="story-meta">
+            Current status:
+            {% if chapter.status == 'published' and chapter.published_at and chapter.published_at > now_utc %}
+                Scheduled for {{ chapter.published_at.strftime('%Y-%m-%d %H:%M') }}
+            {% else %}
+                {{ chapter.status|capitalize }}
+            {% endif %}
+        </p>
+        <form method="POST" action="{{ url_for('edit_chapter', chapter_id=chapter.chapter_id) }}">
+            <div class="form-group">
+                <label for="title">Chapter Title:</label>
+                <input type="text" id="title" name="title" value="{{ chapter.title }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="content">Chapter Content:</label>
+                <textarea id="content" name="content" rows="15" required>{{ chapter.content }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="schedule_at">Schedule for Later (UTC)</label>
+                <input type="datetime-local" id="schedule_at" name="schedule_at">
+            </div>
+
+            <button type="submit" name="action" value="draft" class="btn btn-secondary">Save as Draft</button>
+            <button type="submit" name="action" value="publish_now" class="btn">Publish Now</button>
+            <button type="submit" name="action" value="schedule" class="btn btn-secondary">Schedule for Later</button>
+            <a href="{{ url_for('view_chapter', chapter_id=chapter.chapter_id) }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

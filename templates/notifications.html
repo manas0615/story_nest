@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="notifications-header">
+        <h2>Notifications</h2>
+        <form method="POST" action="{{ url_for('mark_all_notifications_read') }}">
+            <button type="submit" class="btn btn-secondary">Mark All Read</button>
+        </form>
+    </div>
+
+    {% if notifications %}
+        <div class="notifications-list">
+            {% for notification in notifications %}
+                <article class="notification-item {% if not notification.is_read %}notification-unread{% endif %}">
+                    <div>
+                        <p>{{ notification.message }}</p>
+                        <small>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    {% if not notification.is_read %}
+                        <form method="POST" action="{{ url_for('mark_notification_read', notification_id=notification.notification_id) }}">
+                            <button type="submit" class="btn btn-secondary">Mark Read</button>
+                        </form>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No notifications yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

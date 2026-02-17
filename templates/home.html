@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Story Nest{% endblock %}
+
+{% macro story_cards(stories) %}
+    <div class="stories-grid">
+        {% if stories %}
+            {% for story in stories %}
+                <article class="story-card">
+                    <a href="{{ url_for('view_story', story_id=story.story_id) }}" class="story-cover-link">
+                        {% if story.cover_image %}
+                            <img class="story-cover" src="{{ story.cover_image|cover_src }}" alt="{{ story.title }} cover">
+                        {% else %}
+                            <div class="story-cover story-cover-placeholder">No Cover</div>
+                        {% endif %}
+                    </a>
+                    <h3><a href="{{ url_for('view_story', story_id=story.story_id) }}">{{ story.title }}</a></h3>
+                    <p class="story-meta">by <a href="{{ url_for('user_profile', username=story.author_name) }}">{{ story.author_name }}</a> | {{ story.genre_name }}</p>
+                </article>
+            {% endfor %}
+        {% else %}
+            <p>No stories available in this section yet.</p>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% block content %}
+<section class="hero-section home-hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content container hero-container">
+        <p class="hero-kicker">Web Fiction, Daily</p>
+        <h2>Read serial stories you can follow chapter by chapter</h2>
+        <p class="hero-tagline">Discover fresh updates, rising favorites, and new releases from independent authors.</p>
+
+        <form class="hero-search" method="GET" action="{{ url_for('home') }}">
+            <input id="q" type="text" name="q" value="{{ filters.q }}" placeholder="Search story titles">
+            <button class="btn" type="submit">Search</button>
+        </form>
+    </div>
+</section>
+
+<div class="container home-sections">
+    {% if continue_reading %}
+        <section class="home-section">
+            <div class="section-heading">
+                <h2>Continue Reading</h2>
+                <p>Pick up where you left off.</p>
+            </div>
+            <div class="stories-grid">
+                {% for item in continue_reading %}
+                    <article class="story-card">
+                        <a href="{{ url_for('view_story', story_id=item.story_id, chapter=item.last_chapter_id) }}#chapter-{{ item.last_chapter_id }}" class="story-cover-link">
+                            {% if item.cover_image %}
+                                <img class="story-cover" src="{{ item.cover_image|cover_src }}" alt="{{ item.title }} cover">
+                            {% else %}
+                                <div class="story-cover story-cover-placeholder">No Cover</div>
+                            {% endif %}
+                        </a>
+                        <h3><a href="{{ url_for('view_story', story_id=item.story_id, chapter=item.last_chapter_id) }}#chapter-{{ item.last_chapter_id }}">{{ item.title }}</a></h3>
+                        <p class="story-meta">by <a href="{{ url_for('user_profile', username=item.author_name) }}">{{ item.author_name }}</a> | {{ item.genre_name }}</p>
+                        <p class="story-date">Last read: Chapter {{ item.last_chapter_number }} - {{ item.last_chapter_title }}</p>
+                        <a class="btn btn-secondary" href="{{ url_for('view_story', story_id=item.story_id, chapter=item.last_chapter_id) }}#chapter-{{ item.last_chapter_id }}">Continue</a>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if search_results %}
+        <section class="home-section">
+            <div class="section-heading">
+                <h2>Search Results</h2>
+                <p>Results for "{{ filters.q }}"{% if filters.genre %} in {{ filters.genre }}{% endif %}.</p>
+            </div>
+            {{ story_cards(search_results) }}
+
+            {% if total_pages > 1 %}
+                <nav class="pagination" aria-label="Story pagination">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('home', q=filters.q, genre=filters.genre, sort=filters.sort, page=page-1) }}">Previous</a>
+                    {% endif %}
+                    <span>Page {{ page }} of {{ total_pages }}</span>
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('home', q=filters.q, genre=filters.genre, sort=filters.sort, page=page+1) }}">Next</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        </section>
+    {% endif %}
+
+    <section class="home-section">
+        <div class="section-heading">
+            <h2>Latest Updates</h2>
+            <p>Recently updated stories with fresh chapter releases.</p>
+        </div>
+        {{ story_cards(latest_updates) }}
+    </section>
+
+    <section class="home-section">
+        <div class="section-heading">
+            <h2>Trending</h2>
+            <p>Ranked by 7-day momentum: follows, fresh chapters, and rating quality.</p>
+        </div>
+        {{ story_cards(trending_stories) }}
+    </section>
+
+    <section class="home-section">
+        <div class="section-heading">
+            <h2>Popular Stories</h2>
+            <p>Most followed stories, then ranked by reader traffic.</p>
+        </div>
+        {{ story_cards(popular_stories) }}
+    </section>
+
+    <section class="home-section">
+        <div class="section-heading">
+            <h2>Newly Added</h2>
+            <p>Recent arrivals from writers publishing new series.</p>
+        </div>
+        {{ story_cards(newly_added) }}
+    </section>
+</div>
+{% endblock %}

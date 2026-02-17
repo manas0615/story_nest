@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{{ chapter.chapter_title }} - {{ chapter.story_title }}{% endblock %}
+
+{% block content %}
+<div class="container chapter-reading-page">
+    <div class="chapter-nav-row chapter-nav-sticky">
+        {% if prev_chapter_id %}
+            <a class="btn btn-secondary" href="{{ url_for('view_chapter', chapter_id=prev_chapter_id) }}">Previous Chapter</a>
+        {% else %}
+            <span class="btn btn-secondary btn-disabled">Previous Chapter</span>
+        {% endif %}
+        <a class="btn toc-prominent-btn" href="{{ url_for('view_story', story_id=chapter.story_id, chapter=chapter.chapter_id) }}">Table of Contents</a>
+        {% if next_chapter_id %}
+            <a class="btn btn-secondary" href="{{ url_for('view_chapter', chapter_id=next_chapter_id) }}">Next Chapter</a>
+        {% else %}
+            <span class="btn btn-secondary btn-disabled">Next Chapter</span>
+        {% endif %}
+    </div>
+
+    <div class="reading-settings-bar">
+        <details class="reading-settings-dropdown">
+            <summary class="btn btn-secondary settings-summary">Settings</summary>
+            <form method="GET" action="{{ url_for('view_chapter', chapter_id=chapter.chapter_id) }}" class="settings-panel">
+                {% if edit_mode %}
+                    <input type="hidden" name="edit" value="1">
+                {% endif %}
+                <label for="font_size">Font Size (px)</label>
+                <select id="font_size" name="font_size" onchange="this.form.submit()">
+                    {% for size in [16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40] %}
+                        <option value="{{ size }}" {% if reading_font_size == size %}selected{% endif %}>{{ size }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </details>
+    </div>
+
+    <div class="reading-shell" style="--reading-font-size: {{ reading_font_size }}px; --reading-line-height: {{ reading_line_height }};">
+        <p class="story-meta">
+            <a href="{{ url_for('view_story', story_id=chapter.story_id) }}">{{ chapter.story_title }}</a>
+            | by <a href="{{ url_for('user_profile', username=chapter.author_name) }}">{{ chapter.author_name }}</a>
+        </p>
+
+        <h2>Chapter {{ chapter.chapter_number }}: {{ chapter.chapter_title }}</h2>
+        {% if chapter.status == 'draft' and can_edit_chapter %}
+            <p class="story-meta">Status: Draft</p>
+        {% elif chapter.status == 'published' and chapter.published_at and chapter.published_at > now_utc and can_edit_chapter %}
+            <p class="story-meta">Scheduled for {{ chapter.published_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        {% endif %}
+        <p class="story-date">{{ chapter.created_at.strftime('%Y-%m-%d') }}</p>
+
+        {% if edit_mode and can_edit_chapter %}
+            <article class="chapter chapter-full">
+                <form method="POST" action="{{ url_for('view_chapter', chapter_id=chapter.chapter_id) }}">
+                    <div class="form-group">
+                        <label for="content">Edit Chapter Content</label>
+                        <textarea id="content" name="content" rows="18" required>{{ chapter.content }}</textarea>
+                    </div>
+                    <button type="submit" class="btn">Save</button>
+                    <a href="{{ url_for('view_chapter', chapter_id=chapter.chapter_id) }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </article>
+        {% else %}
+            <article class="chapter chapter-full">
+                <p>{{ chapter.content }}</p>
+            </article>
+        {% endif %}
+    </div>
+
+    <section class="chapter-comments">
+        <h5>Comments</h5>
+        {% if session.user_id %}
+            <form method="POST" action="{{ url_for('comment_on_chapter', chapter_id=chapter.chapter_id) }}">
+                <div class="form-group">
+                    <textarea name="content" placeholder="Add a comment on this chapter..." required></textarea>
+                </div>
+                <button type="submit" class="btn">Post Comment</button>
+            </form>
+        {% endif %}
+
+        {% if comments %}
+            {% for comment in comments %}
+                <div class="comment">
+                    <strong>{{ comment.username }}</strong> - {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    <p>{{ comment.content }}</p>
+
+                    {% if can_reply_as_author %}
+                        <form method="POST" action="{{ url_for('reply_to_chapter_comment', chapter_id=chapter.chapter_id, comment_id=comment.comment_id) }}">
+                            <div class="form-group">
+                                <textarea name="content" placeholder="Author reply..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-secondary">Reply as Author</button>
+                        </form>
+                    {% endif %}
+
+                    {% if comment.replies %}
+                        {% for reply in comment.replies %}
+                            <div class="comment reply">
+                                <strong>{{ reply.username }}</strong> - {{ reply.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                <p>{{ reply.content }}</p>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No comments on this chapter yet.</p>
+        {% endif %}
+    </section>
+
+    <div class="chapter-nav-row">
+        {% if prev_chapter_id %}
+            <a class="btn btn-secondary" href="{{ url_for('view_chapter', chapter_id=prev_chapter_id) }}">Previous Chapter</a>
+        {% else %}
+            <span class="btn btn-secondary btn-disabled">Previous Chapter</span>
+        {% endif %}
+        <a class="btn toc-prominent-btn" href="{{ url_for('view_story', story_id=chapter.story_id, chapter=chapter.chapter_id) }}">Table of Contents</a>
+        {% if next_chapter_id %}
+            <a class="btn btn-secondary" href="{{ url_for('view_chapter', chapter_id=next_chapter_id) }}">Next Chapter</a>
+        {% else %}
+            <span class="btn btn-secondary btn-disabled">Next Chapter</span>
+        {% endif %}
+    </div>
+
+    {% if can_edit_chapter %}
+        <div class="story-actions">
+            {% if edit_mode %}
+                <a class="btn btn-secondary" href="{{ url_for('view_chapter', chapter_id=chapter.chapter_id) }}">Back to Read Mode</a>
+            {% else %}
+                <a class="btn btn-secondary" href="{{ url_for('view_chapter', chapter_id=chapter.chapter_id, edit=1) }}">Edit</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

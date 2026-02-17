@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ ui_theme }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}Story Nest{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1><a href="{{ url_for('home') }}">Story Nest</a></h1>
+                <div class="nav-right">
+                    <ul>
+                        <li><a href="{{ url_for('home') }}">Home</a></li>
+                        {% if not session.user_id %}
+                            <li><a href="{{ url_for('login') }}">Login</a></li>
+                            <li><a href="{{ url_for('register') }}">Register</a></li>
+                        {% endif %}
+                    </ul>
+
+                    <form method="POST" action="{{ url_for('set_theme_toggle') }}" class="theme-toggle-form" aria-label="Theme switcher">
+                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                        <input
+                            type="checkbox"
+                            id="theme_toggle"
+                            class="theme-toggle-input"
+                            name="theme"
+                            value="dark"
+                            {% if ui_theme == 'dark' %}checked{% endif %}
+                            onchange="this.form.submit()"
+                            aria-label="Toggle dark mode"
+                        >
+                        <label for="theme_toggle" class="theme-toggle-label">
+                            <span class="theme-icon theme-sun" aria-hidden="true"><i class="fa-solid fa-sun"></i></span>
+                            <span class="theme-icon theme-moon" aria-hidden="true"><i class="fa-solid fa-moon"></i></span>
+                        </label>
+                    </form>
+
+                    {% if session.user_id %}
+                        <details class="profile-menu">
+                            <summary class="profile-menu-toggle" aria-label="Open profile menu">
+                                {% if session.avatar_url %}
+                                    <img src="{{ session.avatar_url|cover_src }}" alt="{{ session.username }} avatar" class="profile-menu-avatar">
+                                {% else %}
+                                    <span class="profile-menu-initial">{{ session.username[:1]|upper }}</span>
+                                {% endif %}
+                            </summary>
+                            <div class="profile-menu-panel">
+                                <a href="{{ url_for('author_dashboard') }}">Author Dashboard</a>
+                                <a href="{{ url_for('create_story') }}">Create Story</a>
+                                <a href="{{ url_for('author_analytics') }}">Analytics</a>
+                                <a href="{{ url_for('reading_list_page') }}">Reading List</a>
+                                <a href="{{ url_for('notifications_page') }}">
+                                    Notifications{% if unread_notifications_count > 0 %} ({{ unread_notifications_count }}){% endif %}
+                                </a>
+                                {% if session.is_admin %}
+                                    <a href="{{ url_for('admin_dashboard') }}">Admin Panel</a>
+                                {% endif %}
+                                <a href="{{ url_for('logout') }}">Logout ({{ session.username }})</a>
+                            </div>
+                        </details>
+                    {% endif %}
+
+                    <button id="mobile_menu_btn" class="mobile-author-toggle" aria-label="Open author panel" aria-expanded="false" type="button">
+                        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                        <span>Author Panel</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div id="mobile_menu_layer" class="mobile-author-layer" aria-hidden="true">
+        <div id="mobile_menu_backdrop" class="mobile-author-backdrop"></div>
+        <nav class="mobile-author-panel" aria-label="Mobile author navigation">
+            <div class="mobile-author-panel-head">
+                <strong>Author Panel</strong>
+                <button id="mobile_menu_close" class="mobile-author-close" type="button" aria-label="Close author panel">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+            <a href="{{ request.referrer or url_for('home') }}" onclick="if (window.history.length > 1) { window.history.back(); return false; }">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+            <a href="{{ url_for('home') }}">Home</a>
+            {% if session.user_id %}
+                <a href="{{ url_for('author_dashboard') }}">Author Dashboard</a>
+                <a href="{{ url_for('author_analytics') }}">Analytics</a>
+                <a href="{{ url_for('create_story') }}">Create Story</a>
+                <a href="{{ url_for('reading_list_page') }}">Reading List</a>
+                <a href="{{ url_for('notifications_page') }}">
+                    Notifications{% if unread_notifications_count > 0 %} ({{ unread_notifications_count }}){% endif %}
+                </a>
+                {% if session.is_admin %}
+                    <a href="{{ url_for('admin_dashboard') }}">Admin Panel</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout ({{ session.username }})</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Story Nest. All rights reserved.</p>
+    </footer>
+    <script>
+        (function () {
+            const menuBtn = document.getElementById('mobile_menu_btn');
+            const menuLayer = document.getElementById('mobile_menu_layer');
+            const menuClose = document.getElementById('mobile_menu_close');
+            const menuBackdrop = document.getElementById('mobile_menu_backdrop');
+            const mobileMenuLinks = menuLayer ? menuLayer.querySelectorAll('a') : [];
+            const detailsMenus = document.querySelectorAll('details.profile-menu, details.reading-settings-dropdown');
+
+            if (!menuBtn || !menuLayer || !menuClose || !menuBackdrop) {
+                return;
+            }
+
+            function setMenu(open) {
+                document.body.classList.toggle('mobile-menu-open', open);
+                menuLayer.classList.toggle('open', open);
+                menuLayer.setAttribute('aria-hidden', open ? 'false' : 'true');
+                menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            }
+
+            menuBtn.addEventListener('click', function () { setMenu(true); });
+            menuClose.addEventListener('click', function () { setMenu(false); });
+            menuBackdrop.addEventListener('click', function () { setMenu(false); });
+            mobileMenuLinks.forEach(function (link) {
+                link.addEventListener('click', function () { setMenu(false); });
+            });
+
+            document.addEventListener('click', function (event) {
+                detailsMenus.forEach(function (detailsEl) {
+                    if (detailsEl.open && !detailsEl.contains(event.target)) {
+                        detailsEl.open = false;
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    setMenu(false);
+                    detailsMenus.forEach(function (detailsEl) { detailsEl.open = false; });
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

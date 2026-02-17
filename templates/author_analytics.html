@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Author Analytics - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container author-layout">
+    <aside class="author-sidebar">
+        <h3>Author Panel</h3>
+        <nav class="author-sidebar-nav">
+            <a class="author-nav-link" href="{{ url_for('author_dashboard') }}"><i class="fa-solid fa-table-columns"></i> Author Dashboard</a>
+            <a class="author-nav-link active" href="{{ url_for('author_analytics') }}"><i class="fa-solid fa-feather-pointed"></i> Analytics</a>
+            <a class="author-nav-link" href="{{ url_for('create_story') }}"><i class="fa-solid fa-pen"></i> Create Story</a>
+            <a class="author-nav-link" href="{{ url_for('notifications_page') }}"><i class="fa-regular fa-bell"></i> Notifications</a>
+        </nav>
+
+        <form method="POST" action="{{ url_for('select_story_for_chapters') }}" class="author-side-form">
+            <label for="story_id"><i class="fa-solid fa-book-open"></i> Chapters</label>
+            <select id="story_id" name="story_id" required>
+                <option value="">Select Story</option>
+                {% for s in sidebar_stories %}
+                    <option value="{{ s.story_id }}">{{ s.title }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary">Open Chapters</button>
+        </form>
+    </aside>
+
+    <section class="author-main analytics-wrap">
+        <h2>Author Analytics</h2>
+
+        <div class="analytics-grid">
+            <article class="metric-card">
+                <div class="metric-label">Total Stories</div>
+                <div class="metric-value">{{ metrics.total_stories }}</div>
+            </article>
+            <article class="metric-card">
+                <div class="metric-label">Total Views</div>
+                <div class="metric-value">{{ metrics.total_views }}</div>
+            </article>
+            <article class="metric-card">
+                <div class="metric-label">Followers</div>
+                <div class="metric-value">{{ metrics.total_followers }}</div>
+            </article>
+            <article class="metric-card">
+                <div class="metric-label">Average Rating</div>
+                <div class="metric-value">
+                    <span class="metric-stars" aria-label="Average rating {{ metrics.avg_rating }} out of 5">
+                        {% set avg_round = metrics.avg_rating|round(0, 'common')|int %}
+                        {% for i in range(1, 6) %}
+                            <span class="{% if i <= avg_round %}star-filled{% else %}star-empty{% endif %}" aria-hidden="true">?</span>
+                        {% endfor %}
+                    </span>
+                </div>
+            </article>
+        </div>
+
+        <article class="panel">
+            <h3>Views per Story</h3>
+            <div class="chart-wrap">
+                <canvas id="viewsChart" aria-label="Views per story chart"></canvas>
+            </div>
+        </article>
+
+        <div class="analytics-main">
+            <article class="panel">
+                <h3>Recent Reviews</h3>
+                <div class="reviews-list">
+                    {% for review in recent_reviews %}
+                        <div class="review-item">
+                            <div class="review-meta">
+                                <strong>{{ review.username }}</strong>
+                                <span aria-label="Rating {{ review.rating }} out of 5">
+                                    {% for i in range(1, 6) %}
+                                        <span class="{% if i <= review.rating %}star-filled{% else %}star-empty{% endif %}" aria-hidden="true">?</span>
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            <p class="review-body">{{ review.comment }}</p>
+                        </div>
+                    {% else %}
+                        <p class="story-meta">No recent reviews yet.</p>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="panel">
+                <h3>Top Stories</h3>
+                <table class="top-table">
+                    <thead>
+                        <tr>
+                            <th>Cover</th>
+                            <th>Story</th>
+                            <th>Views</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in top_stories %}
+                            <tr>
+                                <td>
+                                    {% if s.cover_image %}
+                                        <img class="top-cover" src="{{ s.cover_image|cover_src }}" alt="{{ s.title }} cover">
+                                    {% else %}
+                                        <div class="top-cover"></div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ s.title }}</td>
+                                <td>{{ s.view_count }}</td>
+                                <td aria-label="Rating {{ s.avg_rating }} out of 5">
+                                    {% set r = s.avg_rating|round(0, 'common')|int %}
+                                    {% for i in range(1, 6) %}
+                                        <span class="{% if i <= r %}star-filled{% else %}star-empty{% endif %}" aria-hidden="true">?</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4" class="story-meta">No story data available yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </article>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function () {
+        const labels = {{ chart_labels|tojson }};
+        const values = {{ chart_values|tojson }};
+        const ctx = document.getElementById('viewsChart');
+        if (!ctx) {
+            return;
+        }
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Views',
+                    data: values,
+                    borderWidth: 0,
+                    backgroundColor: 'rgba(255, 90, 61, 0.82)',
+                    hoverBackgroundColor: 'rgba(255, 90, 61, 1)',
+                    borderRadius: 8,
+                    maxBarThickness: 46
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#6b7280' } },
+                    y: { beginAtZero: true, ticks: { color: '#6b7280' }, grid: { color: '#eef1f7' } }
+                }
+            }
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Author Dashboard - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container author-layout">
+    <aside class="author-sidebar">
+        <h3>Author Panel</h3>
+        <nav class="author-sidebar-nav">
+            <a class="author-nav-link active" href="{{ url_for('author_dashboard') }}"><i class="fa-solid fa-table-columns"></i> Author Dashboard</a>
+            <a class="author-nav-link" href="{{ url_for('author_analytics') }}"><i class="fa-solid fa-feather-pointed"></i> Analytics</a>
+            <a class="author-nav-link" href="{{ url_for('create_story') }}"><i class="fa-solid fa-pen"></i> Create Story</a>
+            <a class="author-nav-link" href="{{ url_for('notifications_page') }}"><i class="fa-regular fa-bell"></i> Notifications</a>
+        </nav>
+
+        <form method="POST" action="{{ url_for('select_story_for_chapters') }}" class="author-side-form">
+            <label for="story_id"><i class="fa-solid fa-book-open"></i> Chapters</label>
+            <select id="story_id" name="story_id" required>
+                <option value="">Select Story</option>
+                {% for s in sidebar_stories %}
+                    <option value="{{ s.story_id }}">{{ s.title }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary">Open Chapters</button>
+        </form>
+    </aside>
+
+    <section class="author-main">
+        <h2>Author Dashboard</h2>
+        <p class="story-meta">Every account can publish. Your first published draft marks your account as an author.</p>
+
+        {% if stories %}
+            <h3>Your Stories</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Genre</th>
+                        <th>Views</th>
+                        <th>Followers</th>
+                        <th>Avg Rating</th>
+                        <th>Chapters</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for story in stories %}
+                        <tr>
+                            <td>{{ story.title }}</td>
+                            <td>{{ story.genre_name }}</td>
+                            <td>
+                                <span class="meta-inline">
+                                    <i class="fa-regular fa-eye meta-icon meta-icon-neutral" role="img" aria-label="Views"></i>
+                                    <span>{{ story.view_count }}</span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="meta-inline">
+                                    <i class="fa-solid fa-users meta-icon meta-icon-neutral" role="img" aria-label="Followers"></i>
+                                    <span>{{ story.follower_count }}</span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="meta-inline">
+                                    <span class="meta-rating-stars" aria-label="Average rating {{ story.avg_rating }} out of 5">
+                                        {% set rounded_rating = story.avg_rating|round(0, 'common')|int %}
+                                        {% for i in range(1, 6) %}
+                                            <i class="{% if i <= rounded_rating %}fa-solid{% else %}fa-regular{% endif %} fa-star meta-icon meta-icon-star" aria-hidden="true"></i>
+                                        {% endfor %}
+                                    </span>
+                                    <span>{{ story.avg_rating }}</span>
+                                </span>
+                            </td>
+                            <td>{{ story.chapter_count }}</td>
+                            <td>{% if story.is_published %}Published{% else %}Draft{% endif %}</td>
+                            <td>
+                                <a href="{{ url_for('edit_story', story_id=story.story_id) }}">Edit</a>
+                                {% if not story.is_published %}
+                                    <form method="POST" action="{{ url_for('publish_story', story_id=story.story_id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-secondary">Publish</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <section class="empty-state">
+                <h3>No stories yet</h3>
+                <p>Publish your first story to start tracking views, followers, ratings, and chapters.</p>
+                <a href="{{ url_for('create_story') }}" class="btn">Create Your First Story</a>
+            </section>
+        {% endif %}
+
+        <h3>Recent Notifications</h3>
+        <div class="notifications">
+            {% if notifications %}
+                {% for notification in notifications %}
+                    <div class="notification">
+                        <p>{{ notification.message }}</p>
+                        <small>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No notifications.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

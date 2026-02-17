@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Admin Dashboard</h2>
+    
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <p>{{ total_users }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Published Stories</h3>
+            <p>{{ total_stories }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Pending Reports</h3>
+            <p>{{ pending_reports }}</p>
+        </div>
+    </div>
+    
+    <h3>Pending Reports</h3>
+    {% if reports %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Story</th>
+                    <th>Reported By</th>
+                    <th>Reason</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                    <tr>
+                        <td>{{ report.story_title }}</td>
+                        <td>{{ report.reporter_name }}</td>
+                        <td>{{ report.reason }}</td>
+                        <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('remove_story', story_id=report.story_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger">Remove Story</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No pending reports.</p>
+    {% endif %}
+</div>
+{% endblock %}

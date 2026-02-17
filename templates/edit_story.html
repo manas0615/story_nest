@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Story - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Edit Story: {{ story.title }}</h2>
+
+    <h3>Story Settings</h3>
+    <form method="POST" action="{{ url_for('update_story', story_id=story.story_id) }}" enctype="multipart/form-data" class="author-form-card">
+        <div class="form-group">
+            <label for="story_title">Story Title:</label>
+            <input type="text" id="story_title" name="title" value="{{ story.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="story_description">Description:</label>
+            <textarea id="story_description" name="description" required>{{ story.description }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="genre_id">Genre:</label>
+            <select id="genre_id" name="genre_id" required>
+                {% for genre in genres %}
+                    <option value="{{ genre.genre_id }}" {% if story.genre_id == genre.genre_id %}selected{% endif %}>
+                        {{ genre.genre_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <section class="cover-upload-grid" aria-label="Cover image settings">
+            <div class="cover-upload-panel">
+                <div class="form-group">
+                    <label for="cover_image">Upload Cover Image (Optional):</label>
+                    <input type="file" id="cover_image" name="cover_image" accept=".png,.jpg,.jpeg,.webp,.gif">
+                    <small>Allowed: PNG, JPG, JPEG, WEBP, GIF (max 2MB)</small>
+                    <small>Recommended dimensions: 800 x 450 px</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="cover_image_url">Or Use Cover Image URL:</label>
+                    <input type="url" id="cover_image_url" name="cover_image_url" placeholder="https://example.com/cover.jpg">
+                </div>
+            </div>
+
+            <div class="cover-upload-panel">
+                <label for="cover_image" class="cover-preview-label">Live Preview</label>
+                <div class="cover-preview-frame">
+                    <img
+                        id="cover_preview"
+                        class="cover-preview-image"
+                        alt="Cover preview"
+                        {% if story.cover_image %}src="{{ story.cover_image|cover_src }}" style="display:block;"{% endif %}
+                    >
+                    <p id="cover_preview_empty" class="cover-preview-empty" {% if story.cover_image %}style="display:none;"{% endif %}>
+                        Selected cover preview appears here.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <button type="submit" class="btn btn-primary-gradient">Save Story Settings</button>
+    </form>
+    
+    <h3>Chapters</h3>
+    {% if chapters %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Chapter #</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chapter in chapters %}
+                    <tr>
+                        <td>{{ chapter.chapter_number }}</td>
+                        <td>{{ chapter.title }}</td>
+                        <td>
+                            {% if chapter.status == 'published' and chapter.published_at and chapter.published_at > now_utc %}
+                                Scheduled for {{ chapter.published_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                {{ chapter.status|capitalize }}
+                            {% endif %}
+                        </td>
+                        <td>{{ chapter.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td><a href="{{ url_for('edit_chapter', chapter_id=chapter.chapter_id) }}">Edit Chapter</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No chapters yet. Add your first chapter below.</p>
+    {% endif %}
+    
+    <h3>Add New Chapter</h3>
+    <form method="POST" action="{{ url_for('add_chapter', story_id=story.story_id) }}">
+        <div class="form-group">
+            <label for="title">Chapter Title:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="content">Chapter Content:</label>
+            <textarea id="content" name="content" rows="15" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="schedule_at">Schedule for Later (UTC)</label>
+            <input type="datetime-local" id="schedule_at" name="schedule_at">
+        </div>
+        
+        <button type="submit" name="action" value="draft" class="btn btn-secondary">Save as Draft</button>
+        <button type="submit" name="action" value="publish_now" class="btn">Publish Now</button>
+        <button type="submit" name="action" value="schedule" class="btn btn-secondary">Schedule for Later</button>
+    </form>
+    
+    <a href="{{ url_for('author_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+<script>
+    (function () {
+        const fileInput = document.getElementById('cover_image');
+        const urlInput = document.getElementById('cover_image_url');
+        const preview = document.getElementById('cover_preview');
+        const empty = document.getElementById('cover_preview_empty');
+
+        function showPreview(src) {
+            if (!src) {
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            preview.src = src;
+            preview.style.display = 'block';
+            empty.style.display = 'none';
+        }
+
+        fileInput.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) {
+                if (preview.getAttribute('src')) {
+                    return;
+                }
+                showPreview('');
+                return;
+            }
+            urlInput.value = '';
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                showPreview(event.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        urlInput.addEventListener('input', function () {
+            const value = this.value.trim();
+            if (!value) {
+                if (preview.getAttribute('src')) {
+                    return;
+                }
+                showPreview('');
+                return;
+            }
+            fileInput.value = '';
+            showPreview(value);
+        });
+    })();
+</script>
+{% endblock %}

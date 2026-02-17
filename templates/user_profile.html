@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile.username }} - Profile{% endblock %}
+
+{% block content %}
+<div class="container profile-layout">
+    <section class="profile-header">
+        <div class="profile-avatar-wrap">
+            {% if profile.avatar_url %}
+                <img class="profile-avatar" src="{{ url_for('static', filename=profile.avatar_url) }}" alt="{{ profile.username }} avatar">
+            {% else %}
+                <div class="profile-avatar profile-avatar-placeholder">{{ profile.username[:1]|upper }}</div>
+            {% endif %}
+        </div>
+
+        <div class="profile-main">
+            <h2>{{ profile.username }}</h2>
+            <p class="story-meta">Joined {{ profile.created_at.strftime('%Y-%m-%d') }}</p>
+            <p class="profile-bio">{{ profile.bio or 'This user has not added a bio yet.' }}</p>
+
+            <div class="profile-stats">
+                <div class="stat-tile"><strong>{{ total_followers }}</strong><span>Total Followers</span></div>
+                <div class="stat-tile"><strong>{{ story_followers }}</strong><span>Story Followers</span></div>
+                <div class="stat-tile"><strong>{{ stories|length }}</strong><span>Published Stories</span></div>
+            </div>
+        </div>
+    </section>
+
+    <hr>
+
+    <section>
+        <h3>Stories by {{ profile.username }}</h3>
+        {% if stories %}
+            <div class="stories-grid">
+                {% for story in stories %}
+                    <article class="story-card">
+                        <a href="{{ url_for('view_story', story_id=story.story_id) }}" class="story-cover-link">
+                            {% if story.cover_image %}
+                                <img class="story-cover" src="{{ story.cover_image|cover_src }}" alt="{{ story.title }} cover">
+                            {% else %}
+                                <div class="story-cover story-cover-placeholder">No Cover</div>
+                            {% endif %}
+                        </a>
+                        <h3><a href="{{ url_for('view_story', story_id=story.story_id) }}">{{ story.title }}</a></h3>
+                        <p class="story-meta">{{ story.genre_name }}</p>
+                        <p class="story-date profile-story-meta-line">
+                            <span class="meta-inline">
+                                <i class="fa-regular fa-eye meta-icon meta-icon-neutral" role="img" aria-label="Views"></i>
+                                <span>{{ story.view_count }}</span>
+                            </span>
+                            <span class="profile-meta-sep">|</span>
+                            <span class="meta-inline">
+                                <i class="fa-solid fa-users meta-icon meta-icon-neutral" role="img" aria-label="Followers"></i>
+                                <span>{{ story.follower_count }}</span>
+                            </span>
+                            <span class="profile-meta-sep">|</span>
+                            <span>{{ story.chapter_count }} chapters</span>
+                            <span class="profile-meta-sep">|</span>
+                            <span class="meta-inline">
+                                <span class="meta-rating-stars" aria-label="Average rating {{ story.avg_rating }} out of 5">
+                                    {% set rounded_rating = story.avg_rating|round(0, 'common')|int %}
+                                    {% for i in range(1, 6) %}
+                                        <i class="{% if i <= rounded_rating %}fa-solid{% else %}fa-regular{% endif %} fa-star meta-icon meta-icon-star" aria-hidden="true"></i>
+                                    {% endfor %}
+                                </span>
+                                <span>{{ story.avg_rating }}</span>
+                            </span>
+                        </p>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No published stories yet.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

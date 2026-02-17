@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}{{ story.title }} - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container story-layout">
+    <div class="story-hero">
+        <div class="story-hero-cover">
+            {% if story.cover_image %}
+                <img class="story-detail-cover" src="{{ story.cover_image|cover_src }}" alt="{{ story.title }} cover">
+            {% else %}
+                <div class="story-detail-cover story-cover-placeholder">No Cover</div>
+            {% endif %}
+        </div>
+
+        <div class="story-hero-main">
+            <h2 class="story-title">{{ story.title }}</h2>
+            <p class="story-author">by <a href="{{ url_for('user_profile', username=story.author_name) }}">{{ story.author_name }}</a></p>
+            <div class="genre-tags">
+                <span class="genre-tag">{{ story.genre_name }}</span>
+            </div>
+            <p class="story-description">{{ story.description }}</p>
+
+            <div class="story-stats-grid">
+                <div class="stat-tile">
+                    <strong class="meta-inline">
+                        <i class="fa-regular fa-eye meta-icon meta-icon-neutral" role="img" aria-label="Views"></i>
+                        <span>{{ story.view_count }}</span>
+                    </strong>
+                    <span>Views</span>
+                </div>
+                <div class="stat-tile">
+                    <strong class="meta-inline">
+                        <i class="fa-solid fa-users meta-icon meta-icon-neutral" role="img" aria-label="Followers"></i>
+                        <span>{{ story.follower_count }}</span>
+                    </strong>
+                    <span>Followers</span>
+                </div>
+                <div class="stat-tile">
+                    <strong class="meta-inline">
+                        <span class="meta-rating-stars" aria-label="Average rating {{ story.avg_rating }} out of 5">
+                            {% set rounded_rating = story.avg_rating|round(0, 'common')|int %}
+                            {% for i in range(1, 6) %}
+                                <i class="{% if i <= rounded_rating %}fa-solid{% else %}fa-regular{% endif %} fa-star meta-icon meta-icon-star" aria-hidden="true"></i>
+                            {% endfor %}
+                        </span>
+                        <span>{{ story.avg_rating }}</span>
+                    </strong>
+                    <span>Avg Rating</span>
+                </div>
+                <div class="stat-tile"><strong>{{ story.chapter_count }}</strong><span>Chapters</span></div>
+            </div>
+
+            <div class="story-actions">
+                {% if first_chapter %}
+                    <a class="btn btn-start-reading" href="{{ url_for('view_chapter', chapter_id=first_chapter.chapter_id) }}">Start Reading</a>
+                {% else %}
+                    <span class="btn btn-secondary btn-disabled">Start Reading</span>
+                {% endif %}
+
+                {% if session.user_id %}
+                    {% if can_edit_story %}
+                        <a href="{{ url_for('edit_story', story_id=story.story_id) }}" class="btn btn-secondary">Edit Story</a>
+                    {% endif %}
+                    {% if is_following %}
+                        <form method="POST" action="{{ url_for('unfollow_story', story_id=story.story_id) }}">
+                            <button type="submit" class="btn btn-secondary">Unfollow</button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('follow_story', story_id=story.story_id) }}">
+                            <button type="submit" class="btn btn-secondary">Follow Story</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    {% if session.user_id %}
+        <section class="rating-block">
+            <h3>Rate this Story</h3>
+            <form method="POST" action="{{ url_for('rate_story', story_id=story.story_id) }}" class="rating-form" aria-label="Rate this story">
+                <fieldset class="star-rating" aria-label="Star rating">
+                    <legend class="sr-only">Choose a rating from 1 to 5 stars</legend>
+
+                    <input type="radio" id="story-star5" name="rating" value="5" {% if user_rating == 5 %}checked{% endif %} required>
+                    <label for="story-star5" title="5 stars" aria-label="5 stars">★</label>
+
+                    <input type="radio" id="story-star4" name="rating" value="4" {% if user_rating == 4 %}checked{% endif %}>
+                    <label for="story-star4" title="4 stars" aria-label="4 stars">★</label>
+
+                    <input type="radio" id="story-star3" name="rating" value="3" {% if user_rating == 3 %}checked{% endif %}>
+                    <label for="story-star3" title="3 stars" aria-label="3 stars">★</label>
+
+                    <input type="radio" id="story-star2" name="rating" value="2" {% if user_rating == 2 %}checked{% endif %}>
+                    <label for="story-star2" title="2 stars" aria-label="2 stars">★</label>
+
+                    <input type="radio" id="story-star1" name="rating" value="1" {% if user_rating == 1 %}checked{% endif %}>
+                    <label for="story-star1" title="1 star" aria-label="1 star">★</label>
+                </fieldset>
+                <button type="submit" class="btn">Submit Rating</button>
+            </form>
+        </section>
+    {% endif %}
+
+    <section class="reviews-section">
+        <h3>Reviews</h3>
+
+        {% if session.user_id and can_review %}
+            <form method="POST" action="{{ url_for('submit_story_review', story_id=story.story_id) }}" class="review-form">
+                <div class="form-group">
+                    <label for="review_title">Review Title</label>
+                    <input id="review_title" type="text" name="title" maxlength="180" required value="{{ user_review.title if user_review else '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="review_rating">Rating</label>
+                    <fieldset class="star-rating review-star-rating" aria-label="Review star rating">
+                        <legend class="sr-only">Choose a review rating from 1 to 5 stars</legend>
+
+                        <input type="radio" id="review-star5" name="rating" value="5" {% if user_review and user_review.rating == 5 %}checked{% endif %} required>
+                        <label for="review-star5" title="5 stars" aria-label="5 stars">★</label>
+
+                        <input type="radio" id="review-star4" name="rating" value="4" {% if user_review and user_review.rating == 4 %}checked{% endif %}>
+                        <label for="review-star4" title="4 stars" aria-label="4 stars">★</label>
+
+                        <input type="radio" id="review-star3" name="rating" value="3" {% if user_review and user_review.rating == 3 %}checked{% endif %}>
+                        <label for="review-star3" title="3 stars" aria-label="3 stars">★</label>
+
+                        <input type="radio" id="review-star2" name="rating" value="2" {% if user_review and user_review.rating == 2 %}checked{% endif %}>
+                        <label for="review-star2" title="2 stars" aria-label="2 stars">★</label>
+
+                        <input type="radio" id="review-star1" name="rating" value="1" {% if user_review and user_review.rating == 1 %}checked{% endif %}>
+                        <label for="review-star1" title="1 star" aria-label="1 star">★</label>
+                    </fieldset>
+                </div>
+                <div class="form-group">
+                    <label for="review_body">Review</label>
+                    <textarea id="review_body" name="body" rows="5" required>{{ user_review.body if user_review else '' }}</textarea>
+                </div>
+                <button type="submit" class="btn">{% if user_review %}Update Review{% else %}Post Review{% endif %}</button>
+            </form>
+        {% elif session.user_id and not can_review %}
+            <p class="story-meta">Authors cannot review their own stories.</p>
+        {% else %}
+            <p class="story-meta">Log in to post a review.</p>
+        {% endif %}
+
+        <div class="reviews-list">
+            {% if reviews %}
+                {% for review in reviews %}
+                    <article class="review-card">
+                        <h4>{{ review.title }}</h4>
+                        <p class="story-meta">
+                            by {{ review.username }} |
+                            <span class="review-stars" aria-label="Rating {{ review.rating }} out of 5">
+                                {% for i in range(1, 6) %}
+                                    <span class="star {% if i <= review.rating %}filled{% else %}empty{% endif %}" aria-hidden="true">★</span>
+                                {% endfor %}
+                            </span>
+                            | {{ review.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </p>
+                        <p>{{ review.body }}</p>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <p>No reviews yet.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="toc-section">
+        <h3>Table of Contents</h3>
+        {% if chapters %}
+            <ul class="toc-list">
+                {% for chapter in chapters %}
+                    <li class="toc-item
+                        {% if current_chapter_id == chapter.chapter_id %}toc-current{% endif %}
+                        {% if last_read_chapter_id == chapter.chapter_id %}toc-last-read{% endif %}">
+                        <a href="{{ url_for('view_chapter', chapter_id=chapter.chapter_id) }}">
+                            <span>Chapter {{ chapter.chapter_number }}</span>
+                            <span>{{ chapter.title }}</span>
+                        </a>
+                        <div class="toc-badges">
+                            {% if chapter.status == 'draft' %}
+                                <span class="active-chapter-badge">Draft</span>
+                            {% elif chapter.published_at and chapter.published_at > now_utc %}
+                                <span class="active-chapter-badge">Scheduled for {{ chapter.published_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            {% endif %}
+                            {% if current_chapter_id == chapter.chapter_id %}
+                                <span class="active-chapter-badge">Current</span>
+                            {% endif %}
+                            {% if last_read_chapter_id == chapter.chapter_id %}
+                                <span class="active-chapter-badge">Last Read</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No chapters available yet.</p>
+        {% endif %}
+    </section>
+
+    {% if similar_stories %}
+        <section class="related-stories-section">
+            <h3>Readers Also Liked</h3>
+            <div class="stories-grid">
+                {% for item in similar_stories %}
+                    <article class="story-card">
+                        <a href="{{ url_for('view_story', story_id=item.story_id) }}" class="story-cover-link">
+                            {% if item.cover_image %}
+                                <img class="story-cover" src="{{ item.cover_image|cover_src }}" alt="{{ item.title }} cover">
+                            {% else %}
+                                <div class="story-cover story-cover-placeholder">No Cover</div>
+                            {% endif %}
+                        </a>
+                        <h3><a href="{{ url_for('view_story', story_id=item.story_id) }}">{{ item.title }}</a></h3>
+                        <p class="story-meta">by <a href="{{ url_for('user_profile', username=item.author_name) }}">{{ item.author_name }}</a> | {{ item.genre_name }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

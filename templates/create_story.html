@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Create Story - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container author-form-shell">
+    <div class="author-form-card">
+        <h2>Create New Story</h2>
+        <p class="story-meta">Once you create your first story, your account automatically gains author status.</p>
+
+        <form method="POST" action="{{ url_for('create_story') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="title">Story Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="genre_id">Genre:</label>
+                <select id="genre_id" name="genre_id" required>
+                    {% for genre in genres %}
+                        <option value="{{ genre.genre_id }}">{{ genre.genre_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <section class="cover-upload-grid" aria-label="Cover image settings">
+                <div class="cover-upload-panel">
+                    <div class="form-group">
+                        <label for="cover_image">Upload Cover Image (Optional):</label>
+                        <input type="file" id="cover_image" name="cover_image" accept=".png,.jpg,.jpeg,.webp,.gif">
+                        <small>Allowed: PNG, JPG, JPEG, WEBP, GIF (max 2MB)</small>
+                        <small>Recommended dimensions: 800 x 450 px</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cover_image_url">Or Use Cover Image URL:</label>
+                        <input type="url" id="cover_image_url" name="cover_image_url" placeholder="https://example.com/cover.jpg">
+                    </div>
+                </div>
+
+                <div class="cover-upload-panel">
+                    <label for="cover_image" class="cover-preview-label">Live Preview</label>
+                    <div class="cover-preview-frame">
+                        <img id="cover_preview" class="cover-preview-image" alt="Cover preview">
+                        <p id="cover_preview_empty" class="cover-preview-empty">Selected cover preview appears here.</p>
+                    </div>
+                </div>
+            </section>
+
+            <button type="submit" class="btn btn-primary-gradient">Create Story</button>
+            <a href="{{ url_for('author_dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+<script>
+    (function () {
+        const fileInput = document.getElementById('cover_image');
+        const urlInput = document.getElementById('cover_image_url');
+        const preview = document.getElementById('cover_preview');
+        const empty = document.getElementById('cover_preview_empty');
+
+        function showPreview(src) {
+            if (!src) {
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            preview.src = src;
+            preview.style.display = 'block';
+            empty.style.display = 'none';
+        }
+
+        fileInput.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) {
+                showPreview('');
+                return;
+            }
+            urlInput.value = '';
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                showPreview(event.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        urlInput.addEventListener('input', function () {
+            const value = this.value.trim();
+            if (!value) {
+                showPreview('');
+                return;
+            }
+            fileInput.value = '';
+            showPreview(value);
+        });
+    })();
+</script>
+{% endblock %}

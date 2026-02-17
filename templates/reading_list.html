@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Reading List - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Reading List</h2>
+    <p class="story-meta">Stories you follow for later reading.</p>
+
+    {% if stories %}
+        <div class="stories-grid">
+            {% for story in stories %}
+                <article class="story-card">
+                    <a href="{{ url_for('view_story', story_id=story.story_id) }}" class="story-cover-link">
+                        {% if story.cover_image %}
+                            <img class="story-cover" src="{{ story.cover_image|cover_src }}" alt="{{ story.title }} cover">
+                        {% else %}
+                            <div class="story-cover story-cover-placeholder">No Cover</div>
+                        {% endif %}
+                    </a>
+                    <h3><a href="{{ url_for('view_story', story_id=story.story_id) }}">{{ story.title }}</a></h3>
+                    <p class="story-meta">by <a href="{{ url_for('user_profile', username=story.author_name) }}">{{ story.author_name }}</a> | {{ story.genre_name }}</p>
+                    <p class="story-date">
+                        <span class="meta-inline">
+                            <i class="fa-regular fa-eye meta-icon meta-icon-neutral" role="img" aria-label="Views"></i>
+                            <span>{{ story.view_count }}</span>
+                        </span>
+                        |
+                        <span class="meta-inline">
+                            <span class="meta-rating-stars" aria-label="Average rating {{ story.avg_rating }} out of 5">
+                                {% set rounded_rating = story.avg_rating|round(0, 'common')|int %}
+                                {% for i in range(1, 6) %}
+                                    <i class="{% if i <= rounded_rating %}fa-solid{% else %}fa-regular{% endif %} fa-star meta-icon meta-icon-star" aria-hidden="true"></i>
+                                {% endfor %}
+                            </span>
+                            <span>{{ story.avg_rating }}</span>
+                        </span>
+                    </p>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="empty-state">
+            <h3>No stories in your reading list yet</h3>
+            <p>Follow a story to add it to your reading list.</p>
+            <a href="{{ url_for('home') }}" class="btn">Discover Stories</a>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
