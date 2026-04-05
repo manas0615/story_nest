@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} - Community - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ category.name }}</h2>
+    {% if category.description %}
+        <p>{{ category.description }}</p>
+    {% endif %}
+    {% if category.is_admin_only %}
+        <p class="story-meta">Admin-only category</p>
+    {% endif %}
+    {% if category.is_locked %}
+        <p class="story-meta">This category is locked.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('community_home') }}" class="btn btn-secondary">Back to Community</a></p>
+
+    {% if session.user_id and not category.is_locked %}
+        <section>
+            <h3>Create Thread</h3>
+            <form method="POST" action="{{ url_for('create_forum_thread', category_slug=category.slug) }}">
+                <div class="form-group">
+                    <label for="thread_title">Title</label>
+                    <input id="thread_title" name="title" maxlength="220" required>
+                </div>
+                <div class="form-group">
+                    <label for="thread_content">Opening Post</label>
+                    <textarea id="thread_content" name="content" rows="6" maxlength="10000" required></textarea>
+                </div>
+                <button type="submit" class="btn">Create Thread</button>
+            </form>
+        </section>
+        <hr>
+    {% endif %}
+
+    {% if threads %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Thread</th>
+                    <th>Author</th>
+                    <th>Replies</th>
+                    <th>Views</th>
+                    <th>Last Activity</th>
+                    {% if session.is_admin %}
+                        <th>Admin</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for thread in threads %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('community_thread', thread_id=thread.thread_id) }}">{{ thread.title }}</a>
+                            {% if thread.is_pinned %}<span class="active-chapter-badge">Pinned</span>{% endif %}
+                            {% if thread.is_locked %}<span class="active-chapter-badge">Locked</span>{% endif %}
+                        </td>
+                        <td>{{ thread.author_name }}</td>
+                        <td>{{ thread.reply_count }}</td>
+                        <td>{{ thread.view_count }}</td>
+                        <td>{{ thread.last_post_at.strftime('%Y-%m-%d %H:%M') if thread.last_post_at else '-' }}</td>
+                        {% if session.is_admin %}
+                            <td>
+                                <form method="POST" action="{{ url_for('admin_toggle_forum_thread_pin', thread_id=thread.thread_id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-secondary">{% if thread.is_pinned %}Unpin{% else %}Pin{% endif %}</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin_toggle_forum_thread_lock', thread_id=thread.thread_id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-secondary">{% if thread.is_locked %}Unlock{% else %}Lock{% endif %}</button>
+                                </form>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No threads yet.</p>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('community_category', category_slug=category.slug, page=page-1) }}">&laquo; Previous</a>
+            {% endif %}
+            <span>Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for('community_category', category_slug=category.slug, page=page+1) }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

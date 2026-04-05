@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}{{ thread.title }} - Community - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ thread.title }}</h2>
+    <p class="story-meta">
+        Category: <a href="{{ url_for('community_category', category_slug=thread.category_slug) }}">{{ thread.category_name }}</a>
+        | Author: {{ thread.author_name }}
+        | Views: {{ thread.view_count }}
+    </p>
+    <p>
+        {% if thread.is_pinned %}<span class="active-chapter-badge">Pinned</span>{% endif %}
+        {% if thread.is_locked %}<span class="active-chapter-badge">Locked</span>{% endif %}
+    </p>
+
+    {% if session.is_admin %}
+        <p>
+            <form method="POST" action="{{ url_for('admin_toggle_forum_thread_pin', thread_id=thread.thread_id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-secondary">{% if thread.is_pinned %}Unpin{% else %}Pin{% endif %}</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_toggle_forum_thread_lock', thread_id=thread.thread_id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-secondary">{% if thread.is_locked %}Unlock{% else %}Lock{% endif %}</button>
+            </form>
+        </p>
+    {% endif %}
+
+    {% if posts %}
+        {% for post in posts %}
+            <article class="review-card" id="post-{{ post.post_id }}" {% if highlight_post_id and highlight_post_id == post.post_id %}style="border: 2px solid #3f8cff;"{% endif %}>
+                <p class="story-meta">
+                    #{{ post.post_id }} | {{ post.author_name }} | {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+
+                {% if post.is_deleted %}
+                    <p><em>This post was deleted.</em></p>
+                {% else %}
+                    <p>{{ post.content }}</p>
+                {% endif %}
+
+                {% if session.user_id and not thread.is_locked and not post.is_deleted and post.author_id == session.user_id %}
+                    <details>
+                        <summary class="btn btn-secondary">Edit</summary>
+                        <form method="POST" action="{{ url_for('edit_forum_post', post_id=post.post_id) }}">
+                            <div class="form-group">
+                                <textarea name="content" rows="4" maxlength="10000" required>{{ post.content }}</textarea>
+                            </div>
+                            <button type="submit" class="btn">Save</button>
+                        </form>
+                    </details>
+                    <form method="POST" action="{{ url_for('delete_own_forum_post', post_id=post.post_id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                {% endif %}
+
+                {% if session.is_admin and not post.is_deleted %}
+                    <form method="POST" action="{{ url_for('admin_soft_delete_forum_post', post_id=post.post_id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Admin Delete</button>
+                    </form>
+                {% endif %}
+            </article>
+        {% endfor %}
+    {% else %}
+        <p>No posts yet.</p>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('community_thread', thread_id=thread.thread_id, page=page-1) }}">&laquo; Previous</a>
+            {% endif %}
+            <span>Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for('community_thread', thread_id=thread.thread_id, page=page+1) }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if session.user_id %}
+        {% if thread.is_locked %}
+            <p class="story-meta">This thread is locked. No new replies.</p>
+        {% else %}
+            <section>
+                <h3>Reply</h3>
+                <form method="POST" action="{{ url_for('create_forum_post', thread_id=thread.thread_id) }}">
+                    <div class="form-group">
+                        <textarea name="content" rows="5" maxlength="10000" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Post Reply</button>
+                </form>
+            </section>
+        {% endif %}
+    {% else %}
+        <p class="story-meta">Log in to reply.</p>
+    {% endif %}
+</div>
+{% endblock %}

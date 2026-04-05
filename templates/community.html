@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Community - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Community</h2>
+
+    {% if session.is_admin %}
+        <section>
+            <h3>Create Category</h3>
+            <form method="POST" action="{{ url_for('admin_create_forum_category') }}">
+                <div class="form-group">
+                    <label for="category_name">Name</label>
+                    <input id="category_name" name="name" maxlength="120" required>
+                </div>
+                <div class="form-group">
+                    <label for="category_description">Description</label>
+                    <textarea id="category_description" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="category_sort_order">Sort Order</label>
+                    <input id="category_sort_order" type="number" name="sort_order" value="0">
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" name="is_admin_only" value="1"> Admin Only</label>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" name="is_locked" value="1"> Locked</label>
+                </div>
+                <button type="submit" class="btn">Create Category</button>
+            </form>
+        </section>
+        <hr>
+    {% endif %}
+
+    {% if categories %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Threads</th>
+                    <th>Posts</th>
+                    <th>Latest Activity</th>
+                    {% if session.is_admin %}
+                        <th>Admin</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('community_category', category_slug=category.slug) }}">{{ category.name }}</a>
+                            {% if category.is_admin_only %}<span class="active-chapter-badge">Admin Only</span>{% endif %}
+                            {% if category.is_locked %}<span class="active-chapter-badge">Locked</span>{% endif %}
+                            {% if category.description %}<p>{{ category.description }}</p>{% endif %}
+                        </td>
+                        <td>{{ category.thread_count }}</td>
+                        <td>{{ category.post_count }}</td>
+                        <td>
+                            {% if category.latest_activity_at %}
+                                {{ category.latest_activity_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        {% if session.is_admin %}
+                            <td>
+                                <details>
+                                    <summary class="btn btn-secondary">Edit</summary>
+                                    <form method="POST" action="{{ url_for('admin_update_forum_category', category_id=category.category_id) }}">
+                                        <div class="form-group">
+                                            <label>Name</label>
+                                            <input name="name" value="{{ category.name }}" maxlength="120" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Description</label>
+                                            <textarea name="description" rows="2">{{ category.description or '' }}</textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Sort Order</label>
+                                            <input type="number" name="sort_order" value="{{ category.sort_order }}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label><input type="checkbox" name="is_admin_only" value="1" {% if category.is_admin_only %}checked{% endif %}> Admin Only</label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><input type="checkbox" name="is_locked" value="1" {% if category.is_locked %}checked{% endif %}> Locked</label>
+                                        </div>
+                                        <button type="submit" class="btn">Save</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin_delete_forum_category', category_id=category.category_id) }}">
+                                        <button type="submit" class="btn btn-danger">Delete Category</button>
+                                    </form>
+                                </details>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No categories yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -34,6 +34,16 @@
 
         <form class="hero-search" method="GET" action="{{ url_for('home') }}">
             <input id="q" type="text" name="q" value="{{ filters.q }}" placeholder="Search story titles">
+            <select name="tag" aria-label="Filter by tag">
+                <option value="">All tags</option>
+                {% for tag_name in available_tags %}
+                    <option value="{{ tag_name }}" {% if filters.tag == tag_name %}selected{% endif %}>{{ tag_name }}</option>
+                {% endfor %}
+            </select>
+            <select name="sort" aria-label="Sort results">
+                <option value="latest" {% if filters.sort == 'latest' %}selected{% endif %}>Latest</option>
+                <option value="popular" {% if filters.sort == 'popular' %}selected{% endif %}>Popularity</option>
+            </select>
             <button class="btn" type="submit">Search</button>
         </form>
     </div>
@@ -66,22 +76,26 @@
         </section>
     {% endif %}
 
-    {% if search_results %}
+    {% if has_search_filters %}
         <section class="home-section">
             <div class="section-heading">
                 <h2>Search Results</h2>
-                <p>Results for "{{ filters.q }}"{% if filters.genre %} in {{ filters.genre }}{% endif %}.</p>
+                <p>
+                    Results for "{{ filters.q or 'All stories' }}"
+                    {% if filters.tag %} tagged {{ filters.tag }}{% endif %}
+                    sorted by {{ 'popularity' if filters.sort == 'popular' else 'latest' }}.
+                </p>
             </div>
             {{ story_cards(search_results) }}
 
             {% if total_pages > 1 %}
                 <nav class="pagination" aria-label="Story pagination">
                     {% if page > 1 %}
-                        <a href="{{ url_for('home', q=filters.q, genre=filters.genre, sort=filters.sort, page=page-1) }}">Previous</a>
+                        <a href="{{ url_for('home', q=filters.q, genre=filters.genre, tag=filters.tag, sort=filters.sort, page=page-1) }}">Previous</a>
                     {% endif %}
                     <span>Page {{ page }} of {{ total_pages }}</span>
                     {% if page < total_pages %}
-                        <a href="{{ url_for('home', q=filters.q, genre=filters.genre, sort=filters.sort, page=page+1) }}">Next</a>
+                        <a href="{{ url_for('home', q=filters.q, genre=filters.genre, tag=filters.tag, sort=filters.sort, page=page+1) }}">Next</a>
                     {% endif %}
                 </nav>
             {% endif %}

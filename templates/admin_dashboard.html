@@ -5,6 +5,13 @@
 {% block content %}
 <div class="container">
     <h2>Admin Dashboard</h2>
+    <p>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-primary">Manage Users</a>
+        <a href="{{ url_for('admin_stories') }}" class="btn btn-secondary">Moderate Stories</a>
+        <a href="{{ url_for('admin_comments') }}" class="btn btn-secondary">Moderate Comments</a>
+        <a href="{{ url_for('admin_forum_threads') }}" class="btn btn-secondary">Moderate Forum Threads</a>
+        <a href="{{ url_for('admin_forum_posts') }}" class="btn btn-secondary">Moderate Forum Posts</a>
+    </p>
     
     <div class="dashboard-stats">
         <div class="stat-card">
@@ -41,8 +48,8 @@
                         <td>{{ report.reason }}</td>
                         <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('remove_story', story_id=report.story_id) }}" style="display: inline;">
-                                <button type="submit" class="btn btn-danger">Remove Story</button>
+                            <form method="POST" action="{{ url_for('soft_remove_story', story_id=report.story_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger">Soft Remove Story</button>
                             </form>
                         </td>
                     </tr>

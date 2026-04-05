@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Comments - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Comment Moderation</h2>
+    <form method="GET" action="{{ url_for('admin_comments') }}" class="search-form">
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="Search by content, user, or story">
+        <select name="status">
+            <option value="recent" {% if filters.status == 'recent' %}selected{% endif %}>Recent Visible</option>
+            <option value="hidden" {% if filters.status == 'hidden' %}selected{% endif %}>Hidden</option>
+            <option value="all" {% if filters.status == 'all' %}selected{% endif %}>All</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <p>Total matched comments: {{ total_comments }}</p>
+
+    {% if comments %}
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Story</th>
+                    <th>Comment</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comment in comments %}
+                    <tr>
+                        <td>{{ comment.username }}</td>
+                        <td>{{ comment.story_title }}</td>
+                        <td>{{ comment.content }}</td>
+                        <td>{% if comment.is_hidden %}Hidden{% else %}Visible{% endif %}</td>
+                        <td>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('hide_comment', comment_id=comment.comment_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-secondary">Hide</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('restore_comment', comment_id=comment.comment_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success">Restore</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.comment_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('admin_comments', q=filters.q, status=filters.status, page=page-1) }}">&laquo; Previous</a>
+                {% endif %}
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('admin_comments', q=filters.q, status=filters.status, page=page+1) }}">Next &raquo;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <p>No comments found.</p>
+    {% endif %}
+</div>
+{% endblock %}

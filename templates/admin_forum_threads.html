@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Forum Threads - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Forum Thread Moderation</h2>
+    {% if threads %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Thread</th>
+                    <th>Category</th>
+                    <th>Author</th>
+                    <th>Replies</th>
+                    <th>Last Activity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for thread in threads %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('community_thread', thread_id=thread.thread_id) }}">{{ thread.title }}</a>
+                            {% if thread.is_pinned %}<span class="active-chapter-badge">Pinned</span>{% endif %}
+                            {% if thread.is_locked %}<span class="active-chapter-badge">Locked</span>{% endif %}
+                        </td>
+                        <td><a href="{{ url_for('community_category', category_slug=thread.category_slug) }}">{{ thread.category_name }}</a></td>
+                        <td>{{ thread.author_name }}</td>
+                        <td>{{ thread.reply_count }}</td>
+                        <td>{{ thread.last_post_at.strftime('%Y-%m-%d %H:%M') if thread.last_post_at else '-' }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('admin_toggle_forum_thread_pin', thread_id=thread.thread_id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-secondary">{% if thread.is_pinned %}Unpin{% else %}Pin{% endif %}</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin_toggle_forum_thread_lock', thread_id=thread.thread_id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-secondary">{% if thread.is_locked %}Unlock{% else %}Lock{% endif %}</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No forum threads found.</p>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('admin_forum_threads', page=page-1) }}">&laquo; Previous</a>
+            {% endif %}
+            <span>Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for('admin_forum_threads', page=page+1) }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

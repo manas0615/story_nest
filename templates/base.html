@@ -15,6 +15,7 @@
                 <div class="nav-right">
                     <ul>
                         <li><a href="{{ url_for('home') }}">Home</a></li>
+                        <li><a href="{{ url_for('community_home') }}">Community</a></li>
                         {% if not session.user_id %}
                             <li><a href="{{ url_for('login') }}">Login</a></li>
                             <li><a href="{{ url_for('register') }}">Register</a></li>
@@ -86,6 +87,7 @@
                 <i class="fa-solid fa-arrow-left"></i> Back
             </a>
             <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('community_home') }}">Community</a>
             {% if session.user_id %}
                 <a href="{{ url_for('author_dashboard') }}">Author Dashboard</a>
                 <a href="{{ url_for('author_analytics') }}">Analytics</a>

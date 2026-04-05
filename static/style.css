@@ -424,7 +424,8 @@ html[data-theme="dark"] .form-group label {
 html[data-theme="dark"] .form-group input,
 html[data-theme="dark"] .form-group select,
 html[data-theme="dark"] .form-group textarea,
-html[data-theme="dark"] .hero-search input {
+html[data-theme="dark"] .hero-search input,
+html[data-theme="dark"] .hero-search select {
     background: #0f1a2e;
     border-color: #2a4065;
     color: #e5eeff;
@@ -433,7 +434,8 @@ html[data-theme="dark"] .hero-search input {
 html[data-theme="dark"] .form-group input:focus,
 html[data-theme="dark"] .form-group select:focus,
 html[data-theme="dark"] .form-group textarea:focus,
-html[data-theme="dark"] .hero-search input:focus {
+html[data-theme="dark"] .hero-search input:focus,
+html[data-theme="dark"] .hero-search select:focus {
     border-color: #6ca5d7;
     box-shadow: 0 0 0 3px rgba(108, 165, 215, 0.22);
 }
@@ -1661,12 +1663,13 @@ hr {
 
 .hero-search {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(240px, 1fr) auto auto auto;
     gap: 0.55rem;
-    max-width: 640px;
+    max-width: 980px;
 }
 
-.hero-search input {
+.hero-search input,
+.hero-search select {
     width: 100%;
     padding: 0.74rem 0.85rem;
     border-radius: 10px;
@@ -1676,7 +1679,8 @@ hr {
     font-size: 0.98rem;
 }
 
-.hero-search input:focus {
+.hero-search input:focus,
+.hero-search select:focus {
     outline: none;
     border-color: #6ca5d7;
     box-shadow: 0 0 0 3px rgba(108, 165, 215, 0.28);

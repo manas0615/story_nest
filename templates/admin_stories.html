@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Stories - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Story Moderation</h2>
+    <form method="GET" action="{{ url_for('admin_stories') }}" class="search-form">
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="Search by title or author">
+        <select name="status">
+            <option value="all" {% if filters.status == 'all' %}selected{% endif %}>All statuses</option>
+            <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="hidden" {% if filters.status == 'hidden' %}selected{% endif %}>Hidden</option>
+            <option value="removed" {% if filters.status == 'removed' %}selected{% endif %}>Soft Removed</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <p>Total matched stories: {{ total_stories }}</p>
+
+    {% if stories %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for story in stories %}
+                    <tr>
+                        <td>{{ story.title }}</td>
+                        <td>{{ story.author_name }}</td>
+                        <td>{{ story.moderation_status|title }}</td>
+                        <td>{{ story.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('hide_story', story_id=story.story_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-secondary">Hide</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('restore_story', story_id=story.story_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success">Restore</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('soft_remove_story', story_id=story.story_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger">Soft Remove</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('remove_story', story_id=story.story_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('admin_stories', q=filters.q, status=filters.status, page=page-1) }}">&laquo; Previous</a>
+                {% endif %}
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('admin_stories', q=filters.q, status=filters.status, page=page+1) }}">Next &raquo;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <p>No stories found.</p>
+    {% endif %}
+</div>
+{% endblock %}

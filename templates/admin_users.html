@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Users - Story Nest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>User Moderation</h2>
+    <form method="GET" action="{{ url_for('admin_users') }}" class="search-form">
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="Search username or email">
+        <select name="status">
+            <option value="all" {% if filters.status == 'all' %}selected{% endif %}>All statuses</option>
+            <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="suspended" {% if filters.status == 'suspended' %}selected{% endif %}>Suspended</option>
+            <option value="banned" {% if filters.status == 'banned' %}selected{% endif %}>Banned</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <p>Total matched users: {{ total_users }}</p>
+
+    {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.moderation_status|title }}</td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if user.is_admin_account %}
+                                <span>Protected admin</span>
+                            {% elif user.is_current_user %}
+                                <span>Your account</span>
+                            {% else %}
+                                <form method="POST" action="{{ url_for('suspend_user', user_id=user.user_id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger">Suspend</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('ban_user', user_id=user.user_id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger">Ban</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('reinstate_user', user_id=user.user_id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-success">Reinstate</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('admin_users', q=filters.q, status=filters.status, page=page-1) }}">&laquo; Previous</a>
+                {% endif %}
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('admin_users', q=filters.q, status=filters.status, page=page+1) }}">Next &raquo;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <p>No users found.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -28,6 +28,23 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="story_tags">Tags (comma-separated)</label>
+                <input
+                    type="text"
+                    id="story_tags"
+                    name="story_tags"
+                    list="story_tags_suggestions"
+                    placeholder="e.g. magic, reincarnation, academy"
+                >
+                <small>Up to 12 tags. Each tag max 50 characters.</small>
+                <datalist id="story_tags_suggestions">
+                    {% for tag_name in available_tags %}
+                        <option value="{{ tag_name }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+
             <section class="cover-upload-grid" aria-label="Cover image settings">
                 <div class="cover-upload-panel">
                     <div class="form-group">
